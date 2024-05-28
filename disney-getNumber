@@ -1,0 +1,36 @@
+const Firestore = require('@google-cloud/firestore');
+    const PROJECTID = 'light-ether-314017';
+    const firestore = new Firestore({
+      projectId: PROJECTID,
+      timestampsInSnapshots: true,
+    });
+
+exports.validatePhone = async (req, res) => {
+  function replaceAll(string, search, replace) 
+   {
+     return string.split(search).join(replace);
+   }
+
+  console.log('Dialogflow Request body: ' + JSON.stringify(req.body));
+  let tag = req.body.fulfillmentInfo.tag;
+  console.log('Tag: ' + tag);
+  console.log('Session Info Parameters: ' + JSON.stringify(req.body.sessionInfo.parameters));
+
+  if (tag === 'validatePhone') 
+  {
+    let Phone_Number = replaceAll(JSON.stringify(req.body.sessionInfo.parameters['phone-number']), '"', '');
+
+    const customers = firestore.collection('Customers').doc(Phone_Number);
+    const customerInfo = await customers.get();
+
+    const isValid = customerInfo.exists ? true : false;
+
+    return res.status(200).send({
+      sessionInfo: {
+        parameters: {
+          valid: isValid
+        }
+      }
+    });
+  }
+};
