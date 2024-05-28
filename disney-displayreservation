@@ -1,0 +1,123 @@
+const Firestore = require('@google-cloud/firestore');
+const PROJECTID = 'light-ether-314017';
+const firestore = new Firestore({
+  projectId: PROJECTID,
+  timestampsInSnapshots: true,
+});
+exports.displayreservation = async (req, res) => { //TODO I added "async" here
+  // function replaceAll(string, search, replace) {
+  //   return string.split(search).join(replace);
+  // }
+
+  let tag = req.body.fulfillmentInfo.tag;
+
+  if (tag === 'displayreservation') {
+      const COLLECTION_NAME = 'Customers';
+
+      let phone = req.body.sessionInfo.parameters['phone-number'];
+      let people = req.body.sessionInfo.parameters['num-people'];
+      let dinner_time = req.body.sessionInfo.parameters['dinner-time'];
+
+
+      console.log("phone: " + phone);
+      console.log("People: " + people);
+      console.log("Dinner Time: " + dinner_time);
+
+      let customerDoc = firestore.collection(COLLECTION_NAME).doc(phone);
+      let customerData = await customerDoc.get();
+
+      let movieCode = customerData.data().movieCode;
+      let numTic = customerData.data().numTic;
+      let flightCode = customerData.data().flightCode;
+      let outBoundCode = customerData.data().outBoundCode;
+      let inBoundCode = customerData.data().inBoundCode;
+      let fName = customerData.data().fName;
+      let lName = customerData.data().lName;
+
+      //Start of Time
+
+        let hours = dinner_time['hours'];
+        let minutes = dinner_time['minutes'];
+
+        // calculate
+        let timeValue;
+
+        if (hours > 0 && hours <= 12) 
+        {
+          timeValue= "" + hours;
+        } 
+        else if (hours > 12) 
+        {
+          timeValue= "" + (hours - 12);
+        } 
+        else if (hours == 0) 
+        {
+          timeValue= "12";
+        }
+ 
+        timeValue += (minutes < 10) ? ":0" + minutes : ":" + minutes;  // get minutes
+        timeValue += (hours >= 12) ? " pm" : " am";  // get AM/PM
+
+        console.log("Updated Dinner Time: " + timeValue);
+
+        let time = "6:15 PM";
+        let rest = "Tony's Restaurant";
+
+        //End of Time
+
+        const data = {
+        fName: fName,
+        lName: lName,
+        numTic: numTic,
+        flightCode: flightCode,
+        outBoundCode: outBoundCode,
+        inBoundCode: inBoundCode,
+        movieCode: movieCode,
+        reservationTime: time,
+        numReservation: people,
+        reservationRestaurant: rest
+      };
+
+
+
+
+      
+
+      var answer = "Alright! Your dinner reservation has been reserved. I can also suggest rides nearby that have minimual wait time while you wait for your reservation.";
+
+    return firestore.collection(COLLECTION_NAME)
+      .doc(phone)//*TEST THIS WITHOUT ''
+      .set(data)
+      .then(doc => {
+        return res.status(200).send({
+          fulfillmentResponse: {
+            messages: [{
+              text: {
+                text: [answer]
+              }
+            }]
+          }
+        });
+      }).catch(err => {
+        console.error(err);
+        return res.status(404).send({ error: 'unable to update field', err });
+      });  
+      
+
+
+
+
+
+
+     
+
+
+
+
+
+
+
+  }else{
+    res.status(200).send({});
+  }
+};
