@@ -1,0 +1,75 @@
+const Firestore = require('@google-cloud/firestore');
+const PROJECTID = 'light-ether-314017';
+const firestore = new Firestore({
+  projectId: PROJECTID,
+  timestampsInSnapshots: true,
+});
+exports.changeReservation = async (req, res) => { //TODO I added "async" here
+  // function replaceAll(string, search, replace) {
+  //   return string.split(search).join(replace);
+  // }
+
+  let tag = req.body.fulfillmentInfo.tag;
+
+  if (tag === 'changeReservation') {
+
+      let phone = req.body.sessionInfo.parameters['phone-number'];
+
+      let people = req.body.sessionInfo.parameters['num-people'];
+      let dinner_time = req.body.sessionInfo.parameters['dinner-time'];
+      let restaurant = req.body.sessionInfo.parameters['rest'];
+
+      console.log("People: " + people);
+      console.log("Restaurant: " + restaurant);
+
+      let customerDoc = firestore.collection('Customers').doc(phone);
+      let customerData = await customerDoc.get();
+      let resTim = customerData.data().reservationTime;
+
+      console.log("Reservation Time: " + resTim);
+
+      //Start of Time
+
+        let hours = dinner_time['hours'];
+        let minutes = dinner_time['minutes'];
+
+        // calculate
+        let timeValue;
+
+        if (hours > 0 && hours <= 12) 
+        {
+          timeValue= "" + hours;
+        } 
+        else if (hours > 12) 
+        {
+          timeValue= "" + (hours - 12);
+        } 
+        else if (hours == 0) 
+        {
+          timeValue= "12";
+        }
+ 
+        timeValue += (minutes < 10) ? ":0" + minutes : ":" + minutes;  // get minutes
+        timeValue += (hours >= 12) ? " pm" : " am";  // get AM/PM
+
+        console.log("Updated Dinner Time: " + timeValue);
+
+        //End of Time
+      
+
+      let answer = 'Current wait times show availability at either ' + timeValue + ', or ' + resTim + '. Which timing would you prefer?';
+
+      console.log(answer);
+
+
+    return res.status(200).send({
+      fulfillmentResponse: {
+        messages: [{
+          text: {
+            text: [answer]
+          }
+        }]
+      }
+    })
+  }
+};
